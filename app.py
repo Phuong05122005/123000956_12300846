@@ -5,8 +5,8 @@ import pandas as pd
 
 st.set_page_config(page_title="Demo POS Tagging Tiếng Việt", layout="wide")
 
-st.title("Demo POS Tagging Tiếng Việt")
-st.write("Nhập câu tiếng Việt, ứng dụng sẽ tách từ và gán nhãn từ loại.")
+st.title("Demo POS Tagging Tiếng Việt với Streamlit")
+st.write("Nhập một câu tiếng Việt, ứng dụng sẽ tách từ và gán nhãn từ loại.")
 
 # Input
 text = st.text_area(
@@ -15,150 +15,86 @@ text = st.text_area(
     height=100
 )
 
-analyze_clicked = st.button("🔍 Phân tích", type="primary", use_container_width=True)
+analyze_clicked = st.button("🔍 Phân tích", type="primary", width="stretch")
 
 col1, col2 = st.columns(2)
 
-# =========================
-# 🎨 MÀU PASTEL DỊU MẮT
-# =========================
-POS_COLORS = {
-    "N": "#F8BBD0",
-    "Np": "#F48FB1",
-    "Nc": "#FADADD",
-    "Nu": "#E8F5E9",
-    "V": "#B2DFDB",
-    "A": "#FFF9C4",
-    "P": "#D1C4E9",
-    "R": "#C8E6C9",
-    "L": "#E1BEE7",
-    "M": "#BBDEFB",
-    "E": "#FFE0B2",
-    "C": "#B2EBF2",
-    "I": "#FFF3E0",
-    "T": "#E6EE9C",
-    "B": "#FFCCBC",
-    "Y": "#CFD8DC",
-    "S": "#F3E5F5",
-    "X": "#ECEFF1",
-    "CH": "#E0E0E0",
-}
-
+# Bảng giải thích nhãn từ loại
 POS_TAGS_EXPLANATION = {
-    "N": "Danh từ",
-    "Np": "Danh từ riêng",
-    "Nc": "Danh từ chỉ loại",
-    "Nu": "Danh từ đơn vị",
-    "V": "Động từ",
-    "A": "Tính từ",
-    "P": "Đại từ",
-    "R": "Phó từ",
-    "L": "Định từ",
-    "M": "Số từ",
-    "E": "Giới từ",
-    "C": "Liên từ",
-    "I": "Thán từ",
-    "T": "Trợ từ",
-    "B": "Hán-Việt",
-    "Y": "Viết tắt",
-    "S": "Ngoại lai",
-    "X": "Không rõ",
-    "CH": "Dấu câu",
+    "N": "Danh từ", "Np": "Danh từ riêng", "Nc": "Danh từ chỉ loại",
+    "Nu": "Danh từ đơn vị", "V": "Động từ", "A": "Tính từ",
+    "P": "Đại từ", "R": "Phó từ", "L": "Định từ", "M": "Số từ",
+    "E": "Giới từ", "C": "Liên từ", "I": "Thán từ",
+    "T": "Trợ từ, tiểu từ", "B": "Từ gốc Hán-Việt",
+    "Y": "Từ viết tắt", "S": "Từ ngoại lai",
+    "X": "Từ không phân loại", "CH": "Dấu câu",
 }
 
-# =========================
-# 📥 EXPORT CSV
-# =========================
-def convert_df(df):
-    return df.to_csv(index=False).encode('utf-8')
+# Màu cho từng loại từ loại
+POS_COLORS = {
+    "N": "#FF6B6B", "Np": "#FF4444", "Nc": "#FF8888", "Nu": "#FFAAAA",
+    "V": "#4ECDC4", "A": "#FFE66D", "P": "#A8E6CF", "R": "#95E1D3",
+    "L": "#DDA0DD", "M": "#87CEEB", "E": "#FFA07A", "C": "#98D8C8",
+    "I": "#F7DC6F", "T": "#BB8FCE", "B": "#F0B27A", "Y": "#AED6F1",
+    "S": "#F5B7B1", "X": "#D5DBDB", "CH": "#BDC3C7",
+}
 
-# =========================
-# 🚀 MAIN
-# =========================
+# Lưu kết quả vào session_state
 if analyze_clicked:
-
-    # ❌ Validate input
     if not text.strip():
         st.error("⚠️ Vui lòng nhập nội dung!")
+        st.session_state.pop("pos_result", None)
+        st.session_state.pop("pos_tokens", None)
+        st.session_state.pop("pos_text", None)
     else:
-        tokens = word_tokenize(text)
-        pos_result = pos_tag(text)
+        st.session_state["pos_text"] = text
+        st.session_state["pos_tokens"] = word_tokenize(text)
+        st.session_state["pos_result"] = pos_tag(text)
 
-        df = pd.DataFrame(pos_result, columns=["Word", "POS"])
+if "pos_result" in st.session_state:
+    pos_result = st.session_state["pos_result"]
+    tokens = st.session_state["pos_tokens"]
 
-        # =========================
-        # 🧩 TOKENIZE + HIGHLIGHT POS
-        # =========================
-        with col1:
-            st.subheader("🧩 Tokenize + POS Highlight")
+    # ==================== CỘT 1: TOKENIZE ====================
+    with col1:
+        st.subheader("🔤 Kết quả Tokenization")
+        token_df = pd.DataFrame({"Token": tokens})
+        st.dataframe(token_df, use_container_width=True)
 
-            token_html = ""
-            for word, pos in pos_result:
-                color = POS_COLORS.get(pos, "#FFFFFF")
+    # ==================== CỘT 2: POS TAGGING ====================
+    with col2:
+        st.subheader("🏷️ Kết quả POS Tagging")
+        pos_df = pd.DataFrame(pos_result, columns=["Từ", "Nhãn"])
+        st.dataframe(pos_df, use_container_width=True)
 
-                token_html += f"""
-                <span style="
-                    display:inline-block;
-                    padding:8px 12px;
-                    margin:4px;
-                    background:{color};
-                    color:#2d3436;
-                    border-radius:10px;
-                    font-weight:500;
-                    border:1px solid #dfe6e9;
-                ">
-                    {word} ({pos})
-                </span>
-                """
+    # ==================== HIGHLIGHT MÀU ====================
+    st.subheader("🌈 Câu gốc với highlight màu theo từ loại")
+    colored_html = " ".join([
+        f'<span style="background-color: {POS_COLORS.get(tag, "#D5DBDB")}; '
+        f'color: #000000; padding: 4px 8px; border-radius: 6px; margin: 2px; '
+        f'display: inline-block;">{word} <small style="opacity:0.7;">({tag})</small></span>'
+        for word, tag in pos_result
+    ])
+    st.markdown(colored_html, unsafe_allow_html=True)
 
-            st.markdown(token_html, unsafe_allow_html=True)
+    # ==================== EXPORT CSV ====================
+    st.subheader("📥 Xuất kết quả")
+    export_df = pd.DataFrame(pos_result, columns=["Từ", "Nhãn"])
+    csv_data = export_df.to_csv(index=False).encode("utf-8")
+    st.download_button(
+        label="📄 Tải file CSV",
+        data=csv_data,
+        file_name="pos_tagging_result.csv",
+        mime="text/csv",
+        use_container_width=True
+    )
 
-        # =========================
-        # 🏷️ POS TABLE
-        # =========================
-        with col2:
-            st.subheader("🏷️ POS Tagging Table")
-
-            def highlight_pos(val):
-                color = POS_COLORS.get(val, "#FFFFFF")
-                return f"background-color: {color}; color:#2d3436; font-weight:500"
-
-            st.dataframe(
-                df.style.applymap(highlight_pos, subset=["POS"]),
-                use_container_width=True
-            )
-
-        # =========================
-        # 📥 EXPORT CSV
-        # =========================
-        csv = convert_df(df)
-
-        st.download_button(
-            label="📥 Tải CSV",
-            data=csv,
-            file_name="pos_tagging.csv",
-            mime="text/csv",
-        )
-
-# =========================
-# 📘 POS EXPLANATION
-# =========================
-st.markdown("---")
-st.subheader("📘 Bảng giải thích POS")
-
-pos_df = pd.DataFrame(
-    [(k, v) for k, v in POS_TAGS_EXPLANATION.items()],
-    columns=["Tag", "Ý nghĩa"]
+# ==================== BẢNG GIẢI THÍCH (luôn hiển thị) ====================
+st.subheader("📋 Bảng giải thích các nhãn từ loại (POS Tags)")
+exp_df = pd.DataFrame(
+    list(POS_TAGS_EXPLANATION.items()),
+    columns=["Nhãn", "Giải thích"]
 )
+st.dataframe(exp_df, use_container_width=True, hide_index=True)
 
-def highlight_tag(row):
-    color = POS_COLORS.get(row["Tag"], "#FFFFFF")
-    return [
-        f"background-color: {color}; color:#2d3436; font-weight:600",
-        f"background-color: {color}; color:#2d3436"
-    ]
-
-st.dataframe(
-    pos_df.style.apply(highlight_tag, axis=1),
-    use_container_width=True
-)
+st.caption("🚀 Demo được xây dựng bằng underthesea + Streamlit. Chúc bạn học NLP vui vẻ!")
