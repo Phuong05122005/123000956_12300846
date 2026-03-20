@@ -3,10 +3,10 @@ Cơ Sở Ngôn Ngữ Học – Hỗ Trợ Xử Lý Ngôn Ngữ Tiếng Việt
 
 **Thông tin sinh viên:**
 
-| STT | Mã Số Sinh Viên | Họ và Tên |
-|-----|-----------------|-----------|
-| 1   |                 |           |
-| 2   |                 |           |
+| STT | Mã Số Sinh Viên |     Họ và Tên      |
+|-----|-----------------|--------------------|
+| 1   | 123000956       |   Thái Anh Sang    |
+| 2   | 123000846       | Nguyễn Thái Phương |
 
 ## Mô tả dự án
 
