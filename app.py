@@ -89,12 +89,26 @@ if "pos_result" in st.session_state:
         use_container_width=True
     )
 
-# ==================== BẢNG GIẢI THÍCH (luôn hiển thị) ====================
+# ==================== BẢNG GIẢI THÍCH (luôn hiển thị + CÓ MÀU) ====================
 st.subheader("📋 Bảng giải thích các nhãn từ loại (POS Tags)")
+
 exp_df = pd.DataFrame(
     list(POS_TAGS_EXPLANATION.items()),
     columns=["Nhãn", "Giải thích"]
 )
-st.dataframe(exp_df, use_container_width=True, hide_index=True)
+
+# Hàm style màu cho từng dòng theo POS_COLORS
+def highlight_row(row):
+    color = POS_COLORS.get(row["Nhãn"], "#D5DBDB")
+    return [f'background-color: {color}; color: #000000; font-weight: bold;' for _ in row]
+
+# Áp dụng style
+styled_exp = exp_df.style.apply(highlight_row, axis=1)
+
+st.dataframe(
+    styled_exp,
+    use_container_width=True,
+    hide_index=True
+)
 
 st.caption("🚀 Demo được xây dựng bằng underthesea + Streamlit. Chúc bạn học NLP vui vẻ!")
